@@ -5,16 +5,21 @@ import PackageDescription
 
 let package = Package(
     name: "AsyncToSyncBridge",
+    platforms: [
+        .iOS(.v13),
+        .macOS(.v10_15),
+        .tvOS(.v13),
+        .watchOS(.v6),
+        .macCatalyst(.v13),
+        .visionOS(.v1)
+    ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "AsyncToSyncBridge",
             targets: ["AsyncToSyncBridge"]
         ),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "AsyncToSyncBridge"
         ),
@@ -24,3 +29,4 @@ let package = Package(
         ),
     ]
 )
+
