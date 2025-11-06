@@ -40,13 +40,15 @@ extension Task where Success == Void, Failure == any Error {
     ) {
         self.init(priority: priority) {
             do {
-                let value = try await operation()
-                await MainActor.run {
-                    completion(.success(value))
+                let result: Result<T, Error>
+                do {
+                    let value = try await operation()
+                    result = .success(value)
+                } catch {
+                    result = .failure(error)
                 }
-            } catch {
                 await MainActor.run {
-                    completion(.failure(error))
+                    completion(result)
                 }
             }
         }
@@ -88,6 +90,33 @@ extension Task where Success == Void, Failure == any Error {
 }
 
 extension Task where Success == Void, Failure == Never {
+    
+    /// Bridges an async  operation that returns a value to a completion-handler API with no error.
+    ///
+    /// Runs `operation` in a new `Task` and delivers its returning value, i.e.  calls `completion(value)` on the `MainActor` when it finishes,
+    /// making it safe to update UI.
+    ///
+    /// - Parameters:
+    ///   - priority: Optional `TaskPriority` for the created task.
+    ///   - operation: The async work to perform. Must be `@Sendable`.
+    ///   - completion: A `@Sendable` closure called on the `MainActor` when the operation completes.
+    /// - Returns: The created `Task`, which you may cancel.
+    /// - Concurrency: Parameters are `@Sendable`  and `T` is constrained to `Sendable` to avoid data races when crossing concurrency domains.
+    /// - SeeAlso: The Dispatch-based overload that delivers callbacks on a specific `DispatchQueue`.
+    @discardableResult
+    public init<T: Sendable>(
+        priority: TaskPriority? = nil,
+        operation: @escaping @Sendable () async -> T,
+        completion: @escaping @Sendable (T) -> Void
+    ) {
+        self.init(priority: priority) {
+            let value = await operation()
+            await MainActor.run {
+                completion(value)
+            }
+        }
+    }
+    
     /// Bridges an async `Void` operation to a completion-handler API with no error.
     ///
     /// Runs `operation` in a new `Task` and calls `completion()` on the `MainActor` when it finishes,
@@ -113,43 +142,7 @@ extension Task where Success == Void, Failure == Never {
             }
         }
     }
-    
-    /// Bridges an async throwing operation that returns a value to a completion-handler API.
-    ///
-    /// Runs `operation` in a new `Task` and delivers its `Result` to `completion` on the
-    /// `MainActor`, making it safe to update UI.
-    ///
-    /// - Parameters:
-    ///   - priority: Optional `TaskPriority` for the created task. Defaults to `.userInitiated`.
-    ///   - operation: The async throwing work to perform. Must be `@Sendable` and return a
-    ///     `Sendable` value.
-    ///   - completion: A `@Sendable` closure called on the `MainActor` with the `Result` of
-    ///     `operation`.
-    /// - Returns: The created `Task`, which you may cancel.
-    /// - Important: If the task is cancelled and `operation` throws `CancellationError`, that
-    ///   error is forwarded to `completion(.failure(_))`.
-    /// - Concurrency: Parameters are `@Sendable` and `T` is constrained to `Sendable` to avoid
-    ///   data races when crossing concurrency domains.
-    /// - SeeAlso: The Dispatch-based overloads that deliver callbacks on a specific `DispatchQueue`.
-    @discardableResult
-    public init<T: Sendable>( // `Result` version
-        priority: TaskPriority? = .userInitiated,
-        operation: @escaping @Sendable () async throws -> T,
-        completion: @escaping @Sendable (Result<T, Error>) -> Void
-    ) {
-        self.init(priority: priority) {
-            let result: Result<T, Error>
-            do {
-                let value = try await operation()
-                result = .success(value)
-            } catch {
-                result = .failure(error)
-            }
-            await MainActor.run {
-                completion(result)
-            }
-        }
-    }
+
 }
 
 #if canImport(Dispatch)
@@ -229,6 +222,38 @@ extension Task {
         }
     }
     
+    /// Bridges an async operation that returns a value to a completion-handler API,
+    /// delivering the completion on a specific `DispatchQueue`.
+    ///
+    /// Runs `operation` in a new `Task` and invokes `completion` on `queue` with the
+    /// `Result` of the operation.
+    ///
+    /// - Parameters:
+    ///   - priority: Optional `TaskPriority` for the created task.
+    ///   - operation: The async work to perform. Must be `@Sendable` and return a
+    ///     `Sendable` value.
+    ///   - queue: The `DispatchQueue` on which `completion` is executed. Defaults to `.main`.
+    ///   - completion: A `@Sendable` closure invoked on `queue` with the resulting value.
+    /// - Returns: The created `Task`, which you may cancel.
+    /// - Note: Passing `.main` uses the main GCD queue. If you need `@MainActor` isolation,
+    ///   prefer the MainActor overload (without Dispatch) which uses `await MainActor.run { ... }`.
+    /// - Concurrency: Parameters are `@Sendable` and `T` is constrained to `Sendable` to avoid
+    ///   data races when crossing concurrency domains.
+    @discardableResult
+    public init<T: Sendable>(
+        priority: TaskPriority? = nil,
+        operation: @escaping @Sendable () async -> T,
+        queue: DispatchQueue = .main,
+        completion: @escaping @Sendable (T) -> Void
+    ) where Success == Void, Failure == Never {
+        self.init(priority: priority) {
+            let value = await operation()
+            queue.async {
+                completion(value)
+            }
+        }
+    }
+    
     /// Bridges an async `Void` operation to a completion-handler API with no error, delivering the
     /// completion on a specific `DispatchQueue`.
     ///
@@ -256,5 +281,6 @@ extension Task {
             }
         }
     }
+
 }
 #endif
