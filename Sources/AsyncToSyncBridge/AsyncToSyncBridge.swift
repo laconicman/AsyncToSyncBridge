@@ -32,10 +32,10 @@ extension Task where Success == Void, Failure == any Error {
     /// - Concurrency: Parameters are `@Sendable` and `T` is constrained to `Sendable` to avoid
     ///   data races when crossing concurrency domains.
     /// - SeeAlso: The Dispatch-based overloads that deliver callbacks on a specific `DispatchQueue`.
-    @discardableResult
+    @discardableResult @inlinable
     public init<T: Sendable>(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async throws -> T,
+        _ operation: @escaping @Sendable () async throws -> T,
         completion: @escaping @Sendable (Result<T, Error>) -> Void
     ) {
         self.init(priority: priority) {
@@ -67,10 +67,10 @@ extension Task where Success == Void, Failure == any Error {
     /// - Important: If the task is cancelled and `operation` throws `CancellationError`, that error is forwarded to `completion` as a non-nil error.
     /// - Concurrency: Parameters are `@Sendable` to avoid data races when crossing concurrency domains.
     /// - SeeAlso: The Dispatch-based overload that delivers callbacks on a specific `DispatchQueue`.
-    @discardableResult
+    @discardableResult @inlinable
     public init(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async throws -> Void,
+        _ operation: @escaping @Sendable () async throws -> Void,
         completion: @escaping @Sendable (Error?) -> Void
     ) {
         self.init(priority: priority) {
@@ -103,10 +103,10 @@ extension Task where Success == Void, Failure == Never {
     /// - Returns: The created `Task`, which you may cancel.
     /// - Concurrency: Parameters are `@Sendable`  and `T` is constrained to `Sendable` to avoid data races when crossing concurrency domains.
     /// - SeeAlso: The Dispatch-based overload that delivers callbacks on a specific `DispatchQueue`.
-    @discardableResult
+    @discardableResult @inlinable
     public init<T: Sendable>(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async -> T,
+        _ operation: @escaping @Sendable () async -> T,
         completion: @escaping @Sendable (T) -> Void
     ) {
         self.init(priority: priority) {
@@ -129,10 +129,10 @@ extension Task where Success == Void, Failure == Never {
     /// - Returns: The created `Task`, which you may cancel.
     /// - Concurrency: Parameters are `@Sendable` to avoid data races when crossing concurrency domains.
     /// - SeeAlso: The Dispatch-based overload that delivers callbacks on a specific `DispatchQueue`.
-    @discardableResult
+    @discardableResult @inlinable
     public init(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async -> Void,
+        _ operation: @escaping @Sendable () async -> Void,
         completion: @escaping @Sendable () -> Void
     ) {
         self.init(priority: priority) {
@@ -166,10 +166,10 @@ extension Task {
     ///   prefer the MainActor overload (without Dispatch) which uses `await MainActor.run { ... }`.
     /// - Concurrency: Parameters are `@Sendable` and `T` is constrained to `Sendable` to avoid
     ///   data races when crossing concurrency domains.
-    @discardableResult
+    @discardableResult @inlinable
     public init<T: Sendable>(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async throws -> T,
+        _ operation: @escaping @Sendable () async throws -> T,
         queue: DispatchQueue = .main,
         completion: @escaping @Sendable (Result<T, Error>) -> Void
     ) where Success == Void, Failure == any Error {
@@ -201,10 +201,10 @@ extension Task {
     /// - Returns: The created `Task`, which you may cancel.
     /// - Note: If you need `@MainActor` isolation instead of GCD main queue delivery, prefer the
     ///   MainActor overload pattern (see the value-returning variant above) or adapt this to use `MainActor.run`.
-    @discardableResult
+    @discardableResult @inlinable
     public init(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async throws -> Void,
+        _ operation: @escaping @Sendable () async throws -> Void,
         queue: DispatchQueue = .main,
         completion: @escaping @Sendable (Error?) -> Void
     ) where Success == Void, Failure == any Error {
@@ -239,10 +239,10 @@ extension Task {
     ///   prefer the MainActor overload (without Dispatch) which uses `await MainActor.run { ... }`.
     /// - Concurrency: Parameters are `@Sendable` and `T` is constrained to `Sendable` to avoid
     ///   data races when crossing concurrency domains.
-    @discardableResult
+    @discardableResult @inlinable
     public init<T: Sendable>(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async -> T,
+        _ operation: @escaping @Sendable () async -> T,
         queue: DispatchQueue = .main,
         completion: @escaping @Sendable (T) -> Void
     ) where Success == Void, Failure == Never {
@@ -267,10 +267,10 @@ extension Task {
     /// - Returns: The created `Task`, which you may cancel.
     /// - Note: If you need `@MainActor` isolation instead of GCD main queue delivery, consider
     ///   using `await MainActor.run { completion() }`.
-    @discardableResult
+    @discardableResult @inlinable
     public init(
         priority: TaskPriority? = nil,
-        operation: @escaping @Sendable () async -> Void,
+        _ operation: @escaping @Sendable () async -> Void,
         queue: DispatchQueue = .main,
         completion: @escaping @Sendable () -> Void
     ) where Success == Void, Failure == Never {
