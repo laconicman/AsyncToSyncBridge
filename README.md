@@ -1,5 +1,7 @@
 # AsyncToSyncBridge
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/laconicman/AsyncToSyncBridge)
+
 Bridge modern Swift concurrency (async/await) to completion‑handler based APIs using a tiny set of `Task` convenience initializers. Keep your existing synchronous‑style public interface while migrating internals to async/await.
 
 ## Why this exists
